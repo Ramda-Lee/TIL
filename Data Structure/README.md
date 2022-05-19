@@ -1,1 +1,0 @@
-dircatory for data structure
