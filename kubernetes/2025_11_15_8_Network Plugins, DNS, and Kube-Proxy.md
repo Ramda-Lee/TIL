@@ -118,7 +118,15 @@ netstat -plan | grep kube-proxy
 # tcp6 0  0 :::10256       :::*        LISTEN      1/kube-proxy
 ```
 
+## Pre-Requisites - JSONPath
+
+고급 kubectl 명령(예: jsonpath, custom-columns, sort)을 다루기 전에 JSONPath 문법에 익숙해지는 것을 권장한다. 아래 자료로 먼저 연습한 뒤, 본 노트의 고급 명령 예제로 돌아오자.
+
+- 입문/연습: https://kodekloud.com/p/json-path-quiz
+- Kubernetes 데이터 객체로 연습:
+  - https://mmumshad.github.io/json-path-quiz/index.html#!/?questions=questionskub1
+  - https://mmumshad.github.io/json-path-quiz/index.html#!/?questions=questionskub2
+
 ## References
 - Debug Service issues: https://kubernetes.io/docs/tasks/debug-application-cluster/debug-service/
 - DNS Troubleshooting: https://kubernetes.io/docs/tasks/administer-cluster/dns-debugging-resolution/
-
