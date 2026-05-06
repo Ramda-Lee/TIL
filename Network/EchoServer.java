@@ -22,9 +22,6 @@ public class EchoServer {
         while ((line = in.readLine()) != null) {
           System.out.println("받은 메시지: " + line);
           out.println("Echo: " + line);  // 받은 메시지를 그대로 클라이언트로 전송
-          if (line.isEmpty()) {
-            break;  // 빈 줄이 오면 연결 종료
-          }
         }
         clientSocket.close();  // 클라이언트 소켓 닫기
       }
