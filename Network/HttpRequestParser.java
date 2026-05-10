@@ -4,6 +4,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
@@ -49,9 +50,42 @@ public class HttpRequestParser {
           }
 
           String method = tokens[0];
-          String path = tokens[1];
+          String rawPath = tokens[1];
           String version = tokens[2];
 
+          // path와 query string 분리
+          String path;
+          Map<String, String> queryParams = new java.util.HashMap<>();
+
+          int qIdx = rawPath.indexOf('?');
+          if (qIdx < 0) {
+            // ? 없음 -> query string 없음, path만 존재
+            path = rawPath;
+          }  else {
+            // ? 있음 -> 앞은 path, 뒤는 query string
+            path = rawPath.substring(0, qIdx);
+            String queryString = rawPath.substring(qIdx + 1);
+
+            // &로 각 파라미터 쪼개기
+            if(!queryString.isEmpty()){
+              String[] pairs = queryString.split("&");
+              for(String pair : pairs){
+                // = 첫 위치 기준으로 key/value 분리
+                int eq = pair.indexOf('=');
+                String key, value;
+                if (eq < 0) {
+                  // = 없음 -> 값이 빈 파라미터로 처리
+                  // 예: ?flag -> key="flag", value=""
+                  key = URLDecoder.decode(pair, StandardCharsets.UTF_8);
+                  value = "";
+                } else {
+                  key = URLDecoder.decode(pair.substring(0, eq), StandardCharsets.UTF_8);
+                  value = URLDecoder.decode(pair.substring(eq + 1), StandardCharsets.UTF_8);
+                }
+                queryParams.put(key, value);
+              }
+            }
+          }
           // 헤더 반복 파싱
           Map<String, String> headers = new java.util.HashMap<>();
 
@@ -86,9 +120,11 @@ public class HttpRequestParser {
             String value = headerLine.substring(colon + 1).trim();
             headers.put(key, value);
           }
-
+          System.out.println("요청 라인: [" + requestLine + "]");
           System.out.println("method: " + method);
           System.out.println("path: " + path);
+          System.out.println("query params: ");
+          queryParams.forEach((k, v) -> System.out.println("  " + k + ": " + v));
           System.out.println("version: " + version);
           System.out.println("headers:");
           headers.forEach((k, v) -> System.out.println("  " + k + ": " + v));
