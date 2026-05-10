@@ -5,9 +5,10 @@ import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 
 // 요청 라인의 HTTP 메서드, URL, 프로토콜 버전을 읽어서 출력하는 서버
-public class Step1_RequestLine {
+public class HttpRequestParser {
   public static void main(String[] args) throws IOException{
     try(ServerSocket serverSocket = new ServerSocket(9090)){
       System.out.println("Listening on port http://localhost:9090");
@@ -51,9 +52,46 @@ public class Step1_RequestLine {
           String path = tokens[1];
           String version = tokens[2];
 
+          // 헤더 반복 파싱
+          Map<String, String> headers = new java.util.HashMap<>();
+
+          while (true) {
+            // 헤더 한 줄씩 읽기
+            buf = new ByteArrayOutputStream();
+            prev = -1;
+            String headerLine = null;
+            while ((cur = in.read()) != -1) {
+              if (prev == '\r' && cur == '\n') {
+                byte[] lineBytes = buf.toByteArray();
+                headerLine = new String(lineBytes, 0, lineBytes.length - 1, StandardCharsets.ISO_8859_1);
+                break;
+              }
+              buf.write(cur);
+              prev = cur;
+            }
+            // 빈 줄이 나왔다는 것은 헤더의 끝
+            if(headerLine == null || headerLine.isEmpty()) {
+              break;  
+            }
+
+            // : 기준으로 쪼개기
+            int colon = headerLine.indexOf(':');
+            if (colon < 0){
+              // colon이 없는 경우 헤더는 비정상, 일단 무시
+              System.out.println("잘못된 헤더 형식: " + headerLine);
+              continue;
+            }
+
+            String key = headerLine.substring(0, colon).trim().toLowerCase();
+            String value = headerLine.substring(colon + 1).trim();
+            headers.put(key, value);
+          }
+
           System.out.println("method: " + method);
           System.out.println("path: " + path);
           System.out.println("version: " + version);
+          System.out.println("headers:");
+          headers.forEach((k, v) -> System.out.println("  " + k + ": " + v));
           System.out.println();
 
           // 응답, 우선 OK만
