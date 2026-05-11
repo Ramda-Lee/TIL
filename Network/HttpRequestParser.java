@@ -120,6 +120,36 @@ public class HttpRequestParser {
             String value = headerLine.substring(colon + 1).trim();
             headers.put(key, value);
           }
+
+          // 바디 파싱
+          byte[] body = new byte[0];
+          String contentLengthStr = headers.get("content-length");
+          
+          if(contentLengthStr != null){
+            int contentLength;
+            try{
+              contentLength = Integer.parseInt(contentLengthStr); // content-length 헤더는 문자열이라 숫자로 변환 필요
+            } catch (NumberFormatException e) {
+              System.out.println("잘못된 Content-Length 값: " + contentLengthStr);
+              continue;
+            }
+            // content-length가 0이면 GET 요청으로 판단
+            if(contentLength > 0){
+              body = new byte[contentLength];
+              int totalRead = 0;
+              while (totalRead < contentLength) { // read가 부분만 반환할 수 있어서 반드시 루프 필요
+                int n = in.read(body, totalRead, contentLength - totalRead); // contentLength - totalRead 만큼 남은 바이트를 읽어서 초과 읽기 방지
+                if (n == -1) {
+                  System.out.println("EOF 도달 - 기대: " + contentLength + "받음: " + totalRead);
+                  break;
+                }
+                System.out.println("  read 호출 결과: " + n + " bytes (누적 " + (totalRead + n) + "/" + contentLength + ")");
+                totalRead += n;
+              }
+            }
+          }
+
+
           System.out.println("요청 라인: [" + requestLine + "]");
           System.out.println("method: " + method);
           System.out.println("path: " + path);
@@ -128,7 +158,12 @@ public class HttpRequestParser {
           System.out.println("version: " + version);
           System.out.println("headers:");
           headers.forEach((k, v) -> System.out.println("  " + k + ": " + v));
+          System.out.println("body(" + body.length + " bytes):");
+          if (body.length > 0) {
+            System.out.println(new String(body, StandardCharsets.UTF_8)); // Content-Type을 따라야하지만 일단 UTF-8로 가정해서 출력
+          }
           System.out.println();
+
 
           // 응답, 우선 OK만
           String response = "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n";
